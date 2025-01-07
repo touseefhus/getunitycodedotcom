@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -9,11 +9,11 @@ interface GameData {
     price: string;
     category: string;
     image: File | null;
+    gallery: File[];
     licenseAgreement: string;
     latestVersion: string;
     latestReleaseDate: string;
     originalUnityVersion: string;
-
 }
 
 const GameUploadForm: React.FC = () => {
@@ -23,6 +23,7 @@ const GameUploadForm: React.FC = () => {
         price: "",
         category: "",
         image: null,
+        gallery: [],
         licenseAgreement: "",
         latestVersion: "",
         latestReleaseDate: "",
@@ -47,14 +48,21 @@ const GameUploadForm: React.FC = () => {
         }));
     };
 
+    const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        setFormData((prevData) => ({
+            ...prevData,
+            gallery: files,
+        }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const { name, description, price, category, image, licenseAgreement, latestVersion, latestReleaseDate, originalUnityVersion } = formData;
+        const { name, description, price, category, image, gallery, licenseAgreement, latestVersion, latestReleaseDate, originalUnityVersion } = formData;
 
-        if (!name || !description || !price || !category || !image || !licenseAgreement || !latestReleaseDate || !originalUnityVersion || !latestVersion) {
-            toast.error("All fields (name, description, price, category, and image) are required.");
+        if (!name || !description || !price || !category || !image) {
+            toast.error("All required fields must be filled.");
             return;
         }
 
@@ -64,10 +72,16 @@ const GameUploadForm: React.FC = () => {
         formDataToSend.append("price", price);
         formDataToSend.append("category", category);
         formDataToSend.append("image", image);
-        formDataToSend.append("licenseAgreement", formData.licenseAgreement);
-        formDataToSend.append("latestVersion", formData.latestVersion);
-        formDataToSend.append("latestReleaseDate", formData.latestReleaseDate);
-        formDataToSend.append("originalUnityVersion", formData.originalUnityVersion);
+        formDataToSend.append("licenseAgreement", licenseAgreement);
+        formDataToSend.append("latestVersion", latestVersion);
+        formDataToSend.append("latestReleaseDate", latestReleaseDate);
+        formDataToSend.append("originalUnityVersion", originalUnityVersion);
+
+        // Append gallery images
+        gallery.forEach((file, index) => {
+            formDataToSend.append(`gallery`, file);
+        });
+
         try {
             const response = await fetch("/api/games", {
                 method: "POST",
@@ -75,27 +89,28 @@ const GameUploadForm: React.FC = () => {
             });
 
             const result = await response.json();
-
             if (response.ok) {
-                toast.success("Game added successfully");
+                toast.success("Game added successfully.");
                 setFormData({
                     name: "",
                     description: "",
                     price: "",
                     category: "",
                     image: null,
+                    gallery: [],
                     licenseAgreement: "",
                     latestVersion: "",
                     latestReleaseDate: "",
-                    originalUnityVersion: ""
+                    originalUnityVersion: "",
                 });
             } else {
-                toast.error(result.error || "Something went wrong, please try again.");
+                toast.error(result.error || "An error occurred.");
             }
         } catch (err) {
             toast.error("Network error. Please try again.");
         }
     };
+
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg">
@@ -163,6 +178,18 @@ const GameUploadForm: React.FC = () => {
                             onChange={handleImageChange}
                             className="w-full p-2 border border-gray-300 rounded-md"
                             required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="gallery" className="block text-gray-700">Gallery Images:</label>
+                        <input
+                            type="file"
+                            id="gallery"
+                            name="gallery"
+                            accept="image/*"
+                            multiple
+                            onChange={handleGalleryChange}
+                            className="w-full p-2 border border-gray-300 rounded-md"
                         />
                     </div>
                 </div>

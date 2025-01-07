@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -13,7 +13,7 @@ interface Game {
     licenseAgreement: string;
     latestVersion: string;
     latestReleaseDate: string;
-    originalUnityVersion: string
+    originalUnityVersion: string;
 }
 
 const GameDetails: React.FC = () => {
@@ -30,7 +30,6 @@ const GameDetails: React.FC = () => {
         }
     };
 
-
     useEffect(() => {
         if (id) {
             fetchSingleGame(id as string);
@@ -38,19 +37,49 @@ const GameDetails: React.FC = () => {
     }, [id]);
 
     if (!game) {
-        return <div>Loading game details...</div>;
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-100">
+                <p className="text-lg font-semibold text-gray-700 animate-pulse">
+                    Loading game details...
+                </p>
+            </div>
+        );
     }
 
     return (
-        <div className="container">
-            <div className="">
-                <img src={game.image} alt={game.name} />
-                <p>{game.name}</p>
-                <strong><p>{game.price}</p></strong>
-                <p>licenseAgreement:{game.licenseAgreement}</p>
-                <p>latestVersion:{game.latestVersion}</p>
-                <p>latestReleaseDate:{game.latestReleaseDate}</p>
-                <p>originalUnityVersion:{game.originalUnityVersion}</p>
+        <div className="container mx-auto p-6 bg-gray-50">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+                <img
+                    src={game.image}
+                    alt={game.name}
+                    className="w-full h-64 object-cover"
+                />
+                <div className="p-6">
+                    <h2 className="text-2xl font-bold text-gray-800">{game.name}</h2>
+                    <p className="text-gray-600 mt-2">{game.description}</p>
+                    <div className="mt-4 flex items-center space-x-4">
+                        <span className="text-lg font-semibold text-green-500">
+                            ${game.price}
+                        </span>
+                        <span className="text-sm bg-blue-100 text-blue-500 px-2 py-1 rounded">
+                            {game.category}
+                        </span>
+                    </div>
+                    <div className="mt-6 space-y-2">
+                        <p className="text-gray-700">
+                            <strong>License Agreement:</strong> {game.licenseAgreement}
+                        </p>
+                        <p className="text-gray-700">
+                            <strong>Latest Version:</strong> {game.latestVersion}
+                        </p>
+                        <p className="text-gray-700">
+                            <strong>Latest Release Date:</strong> {game.latestReleaseDate}
+                        </p>
+                        <p className="text-gray-700">
+                            <strong>Original Unity Version:</strong> {game.originalUnityVersion}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -37,7 +37,6 @@ const Home: React.FC = () => {
             .slice(0, 6);
     };
 
-
     useEffect(() => {
         fetchGames();
     }, []);
@@ -50,8 +49,8 @@ const Home: React.FC = () => {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {getGamesByCategory("Mobile").map((game) => (
-                        <div className="p-5 border-solid border-2 rounded-2xl border-dark-200">
-                            <div className="overflow-hidden" key={game._id}>
+                        <div className="p-5 border-solid border-2 rounded-2xl border-dark-200" key={game._id}>
+                            <div className="overflow-hidden">
                                 <img src={game.image || "/default-image.png"} alt={game.name} className="w-full h-48 object-cover rounded-lg" />
                                 <div className="p-4">
                                     <h5 className="font-semibold">{game.name}</h5>
@@ -63,8 +62,6 @@ const Home: React.FC = () => {
                             </div>
                         </div>
                     ))}
-
-
                 </div>
             </div>
             <div className="text-center my-5">

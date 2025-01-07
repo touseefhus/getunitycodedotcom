@@ -18,9 +18,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // Connect to MongoDB
         await connectToDB();
 
-        const formData = await request.formData(); // Using formData for file and data
+        const formData = await request.formData();
 
-        // Extract game data from form
+        // Extract form data
         const name = formData.get("name") as string;
         const description = formData.get("description") as string;
         const price = formData.get("price") as string;
@@ -30,46 +30,46 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const latestVersion = formData.get("latestVersion") as string;
         const latestReleaseDate = formData.get("latestReleaseDate") as string;
         const originalUnityVersion = formData.get("originalUnityVersion") as string;
+        const galleryFiles = formData.getAll("gallery") as File[];
 
+        // Validate required fields
         if (!name || !description || !price || !category || !image) {
-            return NextResponse.json(
-                { error: "All fields (name, description, price, category, and image) are required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Required fields are missing" }, { status: 400 });
         }
 
-        // Ensure the image is a file object
-        if (!(image instanceof File)) {
-            return NextResponse.json(
-                { error: "Image must be a valid file" },
-                { status: 400 }
-            );
-        }
-
-        // Save image to server (or upload to cloud storage like Cloudinary)
+        // Create upload directory
         const uploadPath = path.join(process.cwd(), "public", "uploads");
         if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath); // create directory if it doesn't exist
+            fs.mkdirSync(uploadPath, { recursive: true });
         }
 
+        // Save main image
         const imagePath = path.join(uploadPath, image.name);
         await fs.promises.writeFile(imagePath, Buffer.from(await image.arrayBuffer()));
 
+        // Save gallery images
+        const galleryPaths: string[] = []; // Array to hold gallery image paths
+        for (const file of galleryFiles) {
+            const galleryPath = path.join(uploadPath, file.name);
+            await fs.promises.writeFile(galleryPath, Buffer.from(await file.arrayBuffer()));
+            galleryPaths.push(`/uploads/${file.name}`); // Store relative path
+        }
+
         // Create a new game record
-        const newGame: IGame = new Game({
+        const newGame = new Game({
             name,
             description,
             price: parseFloat(price),
             category,
-            image: `/uploads/${image.name}`,
+            image: `/uploads/${image.name}`, // Main image path
+            gallery: galleryPaths, // Array of gallery image paths
             licenseAgreement,
             latestVersion,
             latestReleaseDate,
-            originalUnityVersion
+            originalUnityVersion,
         });
 
-        console.log(newGame)
-
+        // Save the game record to the database
         const savedGame = await newGame.save();
 
         return NextResponse.json(
@@ -78,12 +78,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
     } catch (error) {
         console.error("Error:", error);
-        return NextResponse.json(
-            { error: "Something went wrong. Please try again." },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
 
 
 
