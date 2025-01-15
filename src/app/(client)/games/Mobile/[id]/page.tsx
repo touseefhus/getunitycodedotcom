@@ -20,6 +20,10 @@ interface Game {
 const GameDetails: React.FC = () => {
     const { id } = useParams(); // Capture the id parameter
     const [game, setGame] = useState<Game | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const limitGame = 5;
 
     const fetchSingleGame = async (gameId: string) => {
         try {

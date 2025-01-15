@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { fetchArticles } from "@/helpers/apiFetcher";
 const Page = () => {
   const [articles, setArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const articlesPerPage = 5;
 
   const getArticles = async (page: number) => {

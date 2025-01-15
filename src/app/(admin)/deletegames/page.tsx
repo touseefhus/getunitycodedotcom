@@ -15,6 +15,8 @@ interface Game {
 const GameList: React.FC = () => {
     const [games, setGames] = useState<Game[]>([]);
     const [editingGame, setEditingGame] = useState<Game | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const itemsPerPage = 6;
 
     // Fetch games
     const fetchGames = async () => {
@@ -43,6 +45,17 @@ const GameList: React.FC = () => {
         setEditingGame(game);
     };
 
+    // Calculate games to display on the current page
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentGames = games.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Handle pagination
+    const totalPages = Math.ceil(games.length / itemsPerPage);
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
     useEffect(() => {
         fetchGames();
     }, []);
@@ -51,7 +64,7 @@ const GameList: React.FC = () => {
         <div className="container mx-auto p-4">
             <h2 className="text-2xl font-bold mb-6">Game List</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {games.map((game) => (
+                {currentGames.map((game) => (
                     <div
                         className="bg-white shadow-md rounded-lg overflow-hidden"
                         key={game._id}
@@ -86,6 +99,22 @@ const GameList: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center mt-6 space-x-2">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <button
+                        key={page}
+                        className={`px-4 py-2 rounded ${page === currentPage
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 hover:bg-gray-300"
+                            }`}
+                        onClick={() => handlePageChange(page)}
+                    >
+                        {page}
+                    </button>
                 ))}
             </div>
 

@@ -23,6 +23,8 @@ interface GamesListProps {
 const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     const [games, setGames] = useState<Game[]>([]);
     const [cartDetails, setCartDetails] = useState<Game[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const gamesPerPage = 6; // Number of games per page
     const router = useRouter();
 
     // Fetch games
@@ -58,7 +60,6 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
             localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
             return updatedCart;
         });
-        console.log("Added to cart:", item);
     };
 
     // Remove from cart
@@ -68,7 +69,6 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
             localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
             return updatedCart;
         });
-        console.log("Removed from cart:", item);
     };
 
     // Check if game is in the cart
@@ -84,13 +84,24 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
         );
     };
 
+    // Paginate games
+    const paginatedGames = () => {
+        const filteredGames = getGamesByCategory();
+        const startIndex = (currentPage - 1) * gamesPerPage;
+        const endIndex = startIndex + gamesPerPage;
+        return filteredGames.slice(startIndex, endIndex);
+    };
+
+    // Total pages
+    const totalPages = Math.ceil(getGamesByCategory().length / gamesPerPage);
+
     return (
         <div>
             <Navbar cartDetails={cartDetails.length} />
             <h2 className="text-center text-2xl font-semibold mb-9">{title}</h2>
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {getGamesByCategory().map((game) => (
+                    {paginatedGames().map((game) => (
                         <div
                             className="p-5 border-solid border-2 rounded-2xl border-dark-200"
                             key={game._id}
@@ -134,8 +145,25 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
                     ))}
                 </div>
             </div>
-            <div className="text-center my-5">
-                <Button className="custom-btn">Load More</Button>
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center space-x-4 mt-8">
+                <Button
+                    className="custom-btn"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                >
+                    Previous
+                </Button>
+                <span>
+                    Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                    className="custom-btn"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
+                    Next
+                </Button>
             </div>
         </div>
     );
