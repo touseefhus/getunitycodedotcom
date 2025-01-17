@@ -24,9 +24,9 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     const [games, setGames] = useState<Game[]>([]);
     const [cartDetails, setCartDetails] = useState<Game[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const gamesPerPage = 6; // Number of games per page
+    const gamesPerPage = 6;
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const router = useRouter();
-
     // Fetch games
     const fetchGames = async () => {
         try {
@@ -77,40 +77,48 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     };
 
     // Filter games by category
-    const getGamesByCategory = () => {
-        return games.filter(
+    const getFilteredGames = () =>
+        games.filter(
             (game) =>
-                game.category?.trim().toLowerCase() === category.trim().toLowerCase()
+                game.category.toLowerCase() === category.toLowerCase() &&
+                (game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    game.description.toLowerCase().includes(searchQuery.toLowerCase()))
         );
-    };
 
     // Paginate games
     const paginatedGames = () => {
-        const filteredGames = getGamesByCategory();
+        const filteredGames = getFilteredGames();
         const startIndex = (currentPage - 1) * gamesPerPage;
         const endIndex = startIndex + gamesPerPage;
         return filteredGames.slice(startIndex, endIndex);
     };
 
     // Total pages
-    const totalPages = Math.ceil(getGamesByCategory().length / gamesPerPage);
+    const totalPages = Math.ceil(getFilteredGames().length / gamesPerPage);
 
     return (
         <div>
             <Navbar cartDetails={cartDetails.length} />
             <h2 className="text-center text-2xl font-semibold mb-9">{title}</h2>
             <div className="container mx-auto px-4">
+                <input
+                    type="text"
+                    placeholder="Search games..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paginatedGames().map((game) => (
                         <div
-                            className="p-5 border-solid border-2 rounded-2xl border-dark-200"
+                            className="p-5 border-solid border-2 rounded-2xl border-dark-200 game-card"
                             key={game._id}
                         >
                             <div className="overflow-hidden">
                                 <img
                                     src={game.image || "/default-image.png"}
                                     alt={game.name}
-                                    className="w-full h-48 object-cover rounded-lg"
+                                    className="w-full h-48 object-cover rounded-lg game-image"
                                 />
                                 <div className="p-4">
                                     <h5 className="font-semibold">{game.name}</h5>

@@ -49,9 +49,9 @@ const Home: React.FC = () => {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {getGamesByCategory("Mobile").map((game) => (
-                        <div className="p-5 border-solid border-2 rounded-2xl border-dark-200" key={game._id}>
+                        <div className="game-card p-5 border-solid border-2 rounded-2xl border-dark-200" key={game._id}>
                             <div className="overflow-hidden">
-                                <img src={game.image || "/default-image.png"} alt={game.name} className="w-full h-48 object-cover rounded-lg" />
+                                <img src={game.image || "/default-image.png"} alt={game.name} className="game-image w-full h-48 object-cover rounded-lg" />
                                 <div className="p-4">
                                     <h5 className="font-semibold">{game.name}</h5>
                                     <p className="text-gray-600">{game.description}</p>
@@ -72,12 +72,12 @@ const Home: React.FC = () => {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {getGamesByCategory("PC").map((game) => (
-                        <div className="p-5 border-solid border-2 rounded-2xl border-dark-500" key={game._id}>
+                        <div className="game-card p-5 border-solid border-2 rounded-2xl border-dark-500" key={game._id}>
                             <div className="overflow-hidden">
                                 <img
                                     src={game.image || "/default-image.png"}
                                     alt={game.name}
-                                    className="w-full h-48 object-cover rounded-lg"
+                                    className="game-image w-full h-48 object-cover rounded-lg"
                                 />
                                 <div className="p-4">
                                     <h5 className="font-semibold">{game.name}</h5>

@@ -184,3 +184,24 @@ body {
   transform: scale(0.95);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
+/* hover on games card*/
+.game-card {
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.game-image {
+
+  transition: transform 0.3s ease;
+}
+
+.game-card:hover .game-image {
+  /* border-radius: 15px; */
+  transform: scale(1.05);
+}

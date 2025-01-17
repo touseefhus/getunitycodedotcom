@@ -2,7 +2,7 @@
 import GamesList from "@/components/gameList/page";
 
 const MobileGames: React.FC = () => {
-    return <GamesList category="Mobile" title="Featured Mobile Games" />;
+    return <GamesList category="Mobile" title="All Mobile Games" />;
 };
 
 export default MobileGames;

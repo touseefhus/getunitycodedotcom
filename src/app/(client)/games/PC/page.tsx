@@ -2,7 +2,7 @@
 import GamesList from "@/components/gameList/page";
 
 const PcGames: React.FC = () => {
-    return <GamesList category="PC" title="Featured PC Games" />;
+    return <GamesList category="PC" title="All PC Games" />;
 };
 
 export default PcGames;
