@@ -12,6 +12,7 @@ interface Game {
     price: number;
     category: string;
     image?: string;
+    uploadDate: string;
 }
 
 const Home: React.FC = () => {
@@ -22,11 +23,15 @@ const Home: React.FC = () => {
     const fetchGames = async () => {
         try {
             const response = await axios.get("/api/games");
-            setGames(response.data.games);
+            const sortedGames = response.data.games.sort((a: Game, b: Game) =>
+                new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+            );
+            setGames(sortedGames);
         } catch (error) {
             console.error("Error while fetching games data", error);
         }
     };
+
 
     // Filter games by category and limit to 7
     const getGamesByCategory = (category: string) => {

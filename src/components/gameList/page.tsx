@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Trash } from "lucide-react";
 import Navbar from "@/components/Navbar/page";
+import parse from "html-react-parser"; // Import the library for parsing HTML
 
 interface Game {
     _id: string;
     name: string;
-    description: string;
+    description: string; // Contains HTML content
     category: string;
     price: number;
     image: string;
+    uploadDate: string
 }
 
 interface GamesListProps {
@@ -27,13 +29,17 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     const gamesPerPage = 6;
     const [searchQuery, setSearchQuery] = useState<string>("");
     const router = useRouter();
+
     // Fetch games
     const fetchGames = async () => {
         try {
             const response = await axios.get("/api/games");
-            setGames(response.data.games);
+            const sortedGames = response.data.games.sort((a: Game, b: Game) =>
+                new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+            );
+            setGames(sortedGames);
         } catch (error) {
-            console.error("Error fetching games data:", error);
+            console.error("Error while fetching games data", error);
         }
     };
 
@@ -122,7 +128,8 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
                                 />
                                 <div className="p-4">
                                     <h5 className="font-semibold">{game.name}</h5>
-                                    <p className="text-gray-600">{game.description}</p>
+                                    {/* Safely render HTML description */}
+                                    <div className="text-gray-600">{parse(game.description)}</div>
                                     <p className="text-gray-800 mt-2">
                                         <strong>Price:</strong> ${game.price.toFixed(2)}
                                     </p>

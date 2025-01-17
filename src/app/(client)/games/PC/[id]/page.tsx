@@ -2,7 +2,7 @@
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { useEffect, useState } from "react";
-
+import parse from "html-react-parser";
 interface Game {
     _id: string;
     name: string;
@@ -56,7 +56,7 @@ const GameDetails: React.FC = () => {
                 />
                 <div className="p-6">
                     <h2 className="text-2xl font-bold text-gray-800">{game.name}</h2>
-                    <p className="text-gray-600 mt-2">{game.description}</p>
+                    <div className="text-gray-600">{parse(game.description)}</div>
                     <div className="mt-4 flex items-center space-x-4">
                         <span className="text-lg font-semibold text-green-500">
                             ${game.price}

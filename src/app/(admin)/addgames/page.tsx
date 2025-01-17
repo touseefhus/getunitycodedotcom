@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import DOMPurify from "dompurify";
 
 interface GameData {
     name: string;
@@ -112,6 +113,7 @@ const GameUploadForm: React.FC = () => {
     };
 
 
+
     return (
         <div className="w-full mx-auto p-6 bg-white shadow-lg rounded-lg">
             <h2 className="text-2xl font-semibold text-center mb-6">Upload a New Game</h2>
@@ -131,13 +133,14 @@ const GameUploadForm: React.FC = () => {
                         />
                     </div>
                     <div className="mb-4">
-                        <label htmlFor="description" className="block text-gray-700">Description:</label>
+                        <label htmlFor="description" className="block text-gray-700">Description (HTML Allowed):</label>
                         <textarea
                             id="description"
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
                             className="w-full p-2 border border-gray-300 rounded-md"
+                            placeholder="Use HTML tags for styling (e.g., <b>bold</b>, <i>italic</i>)"
                             required
                         />
                     </div>
@@ -220,7 +223,7 @@ const GameUploadForm: React.FC = () => {
                     <div className="mb-4">
                         <label htmlFor="latestReleaseDate" className="block text-gray-700">Latest Release Date:</label>
                         <input
-                            type="text"
+                            type="date"
                             id="latestReleaseDate"
                             name="latestReleaseDate"
                             value={formData.latestReleaseDate}
