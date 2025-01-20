@@ -4,17 +4,19 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Trash } from "lucide-react";
+import { CiHeart } from "react-icons/ci";
+import { FaHeart } from "react-icons/fa";
 import Navbar from "@/components/Navbar/page";
-import parse from "html-react-parser"; // Import the library for parsing HTML
+import parse from "html-react-parser";
 
 interface Game {
     _id: string;
     name: string;
-    description: string; // Contains HTML content
+    description: string;
     category: string;
     price: number;
     image: string;
-    uploadDate: string
+    uploadDate: string;
 }
 
 interface GamesListProps {
@@ -25,9 +27,11 @@ interface GamesListProps {
 const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     const [games, setGames] = useState<Game[]>([]);
     const [cartDetails, setCartDetails] = useState<Game[]>([]);
+    const [wishlist, setWishlist] = useState<Game[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const gamesPerPage = 6;
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [showWishlist, setShowWishlist] = useState(false); // Toggle for wishlist view
     const router = useRouter();
 
     // Fetch games
@@ -43,53 +47,58 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
         }
     };
 
-    // Load cart from localStorage on component mount
     useEffect(() => {
         const storedCart = localStorage.getItem("cart");
-        if (storedCart) {
-            try {
-                setCartDetails(JSON.parse(storedCart));
-            } catch (error) {
-                console.error("Error parsing cart data from localStorage:", error);
-            }
-        }
+        const storedWishlist = localStorage.getItem("wishlist");
+        if (storedCart) setCartDetails(JSON.parse(storedCart));
+        if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
         fetchGames();
     }, []);
 
-    // Add to cart
+    // Add/Remove from Cart
     const addToCart = (item: Game) => {
-        setCartDetails((prevCart) => {
-            if (prevCart.some((game) => game._id === item._id)) {
-                return prevCart;
-            }
-            const updatedCart = [...prevCart, item];
-            localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
-            return updatedCart;
-        });
+        if (!cartDetails.some((game) => game._id === item._id)) {
+            const updatedCart = [...cartDetails, item];
+            setCartDetails(updatedCart);
+            localStorage.setItem("cart", JSON.stringify(updatedCart));
+        }
     };
 
-    // Remove from cart
     const removeFromCart = (item: Game) => {
-        setCartDetails((prevCart) => {
-            const updatedCart = prevCart.filter((game) => game._id !== item._id);
-            localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
-            return updatedCart;
-        });
+        const updatedCart = cartDetails.filter((game) => game._id !== item._id);
+        setCartDetails(updatedCart);
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
     };
 
-    // Check if game is in the cart
-    const isInCart = (game: Game) => {
-        return cartDetails.some((item) => item._id === game._id);
+    const isInCart = (game: Game) => cartDetails.some((item) => item._id === game._id);
+
+    // Add/Remove from Wishlist
+    const addToWishlist = (item: Game) => {
+        if (!wishlist.some((game) => game._id === item._id)) {
+            const updatedWishlist = [...wishlist, item];
+            setWishlist(updatedWishlist);
+            localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+        }
     };
 
-    // Filter games by category
-    const getFilteredGames = () =>
-        games.filter(
+    const removeFromWishlist = (item: Game) => {
+        const updatedWishlist = wishlist.filter((game) => game._id !== item._id);
+        setWishlist(updatedWishlist);
+        localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+    };
+
+    const isInWishlist = (game: Game) => wishlist.some((item) => item._id === game._id);
+
+    // Filter games by category or wishlist
+    const getFilteredGames = () => {
+        const filteredGames = games.filter(
             (game) =>
                 game.category.toLowerCase() === category.toLowerCase() &&
                 (game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     game.description.toLowerCase().includes(searchQuery.toLowerCase()))
         );
+        return showWishlist ? filteredGames.filter((game) => isInWishlist(game)) : filteredGames;
+    };
 
     // Paginate games
     const paginatedGames = () => {
@@ -99,12 +108,11 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
         return filteredGames.slice(startIndex, endIndex);
     };
 
-    // Total pages
     const totalPages = Math.ceil(getFilteredGames().length / gamesPerPage);
 
     return (
-        <div>
-            <Navbar cartDetails={cartDetails.length} />
+        <div style={{ marginTop: "90px" }}>
+            <Navbar wishlistDetails={wishlist.length} cartDetails={cartDetails.length} />
             <h2 className="text-center text-2xl font-semibold mb-9">{title}</h2>
             <div className="container mx-auto px-4">
                 <input
@@ -114,53 +122,57 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-4 py-2 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {/* <Button onClick={() => setShowWishlist(!showWishlist)} className="mb-6">
+                    {showWishlist ? "Show All Games" : "View Wishlist"}
+                </Button> */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paginatedGames().map((game) => (
                         <div
                             className="p-5 border-solid border-2 rounded-2xl border-dark-200 game-card"
                             key={game._id}
                         >
-                            <div className="overflow-hidden">
-                                <img
-                                    src={game.image || "/default-image.png"}
-                                    alt={game.name}
-                                    className="w-full h-48 object-cover rounded-lg game-image"
-                                />
-                                <div className="p-4">
-                                    <h5 className="font-semibold">{game.name}</h5>
-                                    {/* Safely render HTML description */}
-                                    <div className="text-gray-600">{parse(game.description)}</div>
-                                    <p className="text-gray-800 mt-2">
-                                        <strong>Price:</strong> ${game.price.toFixed(2)}
-                                    </p>
-                                    <div className="flex justify-between items-center mt-4">
-                                        <Button
-                                            onClick={() => router.push(`/games/${category}/${game._id}`)}
-                                            className="custom-btn"
-                                        >
-                                            View Details
-                                        </Button>
-                                        <Button
-                                            onClick={() =>
-                                                isInCart(game)
-                                                    ? removeFromCart(game)
-                                                    : addToCart(game)
-                                            }
-                                        >
-                                            {isInCart(game) ? (
-                                                <Trash size={16} />
-                                            ) : (
-                                                <ShoppingCart size={16} />
-                                            )}
-                                        </Button>
-                                    </div>
+                            <img
+                                src={game.image || "/default-image.png"}
+                                alt={game.name}
+                                className="w-full h-48 object-cover rounded-lg"
+                            />
+                            <div className="p-4">
+                                <h5 className="font-semibold">{game.name}</h5>
+                                {/* <div className="text-gray-600">{parse(game.description)}</div> */}
+                                <p className="text-gray-800 mt-2">
+                                    <strong>Price:</strong> ${game.price.toFixed(2)}
+                                </p>
+                                <div className="flex justify-between items-center mt-4">
+                                    <Button
+                                        onClick={() => router.push(`/games/${category}/${game._id}`)}
+                                        className="custom-btn"
+                                    >
+                                        View Details
+                                    </Button>
+                                    <Button
+                                        onClick={() =>
+                                            isInCart(game)
+                                                ? removeFromCart(game)
+                                                : addToCart(game)
+                                        }
+                                    >
+                                        {isInCart(game) ? <Trash size={16} /> : <ShoppingCart size={16} />}
+                                    </Button>
+                                    <Button
+                                        onClick={() =>
+                                            isInWishlist(game)
+                                                ? removeFromWishlist(game)
+                                                : addToWishlist(game)
+                                        }
+                                    >
+                                        {isInWishlist(game) ? <FaHeart size={16} /> : <CiHeart size={16} />}
+                                    </Button>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
-            {/* Pagination Controls */}
             <div className="flex justify-center items-center space-x-4 mt-8">
                 <Button
                     className="custom-btn"

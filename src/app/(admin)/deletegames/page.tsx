@@ -74,9 +74,8 @@ const GameList: React.FC = () => {
                             alt={game.name}
                             className="w-full h-48 object-cover"
                         />
-                        <div className="p-4">
+                        <div className="p-6">
                             <h5 className="text-lg font-semibold">{game.name}</h5>
-                            <p className="text-gray-600 mt-2">{game.description}</p>
                             <p className="text-gray-800 mt-2">
                                 <strong>Price:</strong> ${game.price.toFixed(2)}
                             </p>

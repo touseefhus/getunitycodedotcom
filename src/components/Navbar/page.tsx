@@ -9,9 +9,10 @@ import AuthDialog from "../dialog/authDialog";
 
 interface NavbarProps {
     cartDetails: number; // Expects the cart count as a prop
+    wishlistDetails: number; // Expects the wishlist count as a prop
 }
 
-const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
+const Navbar: React.FC<NavbarProps> = ({ cartDetails, wishlistDetails }) => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -25,8 +26,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
     };
 
     useEffect(() => {
-
-    },)
+        // Placeholder for any side effects
+    }, []);
 
     return (
         <nav
@@ -67,18 +68,38 @@ const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
                     >
                         Article
                     </Link>
-                    <span>
-                        <MdOutlineFavoriteBorder />
-                    </span>
+
+                    {/* Wish List */}
+                    {/* Wish List */}
+                    <Link href="/wishlist">
+                        <span className="relative flex items-center">
+                            <MdOutlineFavoriteBorder className="text-xl" />
+                            {wishlistDetails > 0 && (
+                                <span
+                                    className="absolute top-0 right-0 rounded-full h-5 w-5 flex items-center justify-center"
+                                    style={{
+                                        transform: "translate(50%, -50%)",
+                                        background: "#F5465A",
+                                        color: "white",
+                                    }}
+                                >
+                                    {wishlistDetails}
+                                </span>
+                            )}
+                        </span>
+                    </Link>
+
+
+                    {/* Cart */}
                     <Link href="/cart">
                         <span className="relative flex items-center">
                             <BsCart3 className="text-xl" />
                             {cartDetails > 0 && (
                                 <span
-                                    className="absolute top-0 right-0 font-semibold rounded-full h-5 w-5 flex items-center justify-center"
+                                    className="absolute top-0 right-0 rounded-full h-5 w-5 flex items-center justify-center"
                                     style={{
                                         transform: "translate(50%, -50%)",
-                                        background: "red",
+                                        background: "#F5465A",
                                         color: "white",
                                     }}
                                 >
@@ -87,6 +108,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
                             )}
                         </span>
                     </Link>
+
+                    {/* Auth Buttons */}
                     {isLoggedIn ? (
                         <Button onClick={handleLogout}>Logout</Button>
                     ) : (
@@ -135,11 +158,18 @@ const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
                             Home
                         </Link>
                         <Link
-                            href="/games/mobilegames"
+                            href="/games/Mobile"
                             className="text-gray-800 hover:text-blue-500"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Mobile Games
+                        </Link>
+                        <Link
+                            href="/games/PC"
+                            className="text-gray-800 hover:text-blue-500"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            PC Games
                         </Link>
                         <Link
                             href="/articles"
@@ -151,7 +181,10 @@ const Navbar: React.FC<NavbarProps> = ({ cartDetails }) => {
                         {isLoggedIn ? (
                             <Button onClick={handleLogout}>Logout</Button>
                         ) : (
-                            <Button onClick={() => setIsDialogOpen(true)}>
+                            <Button
+                                className="custom-btn"
+                                onClick={() => setIsDialogOpen(true)}
+                            >
                                 Get Started
                             </Button>
                         )}
