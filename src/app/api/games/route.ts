@@ -15,72 +15,89 @@ const connectToDB = async (): Promise<void> => {
 // API Route for adding a game with image
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
-        // Connect to MongoDB
+        // Step 1: Connect to the database
         await connectToDB();
 
+        // Step 2: Parse form data from the request
         const formData = await request.formData();
 
-        // Extract form data
+        // Extract form fields
         const name = formData.get("name") as string;
         const description = formData.get("description") as string;
         const price = formData.get("price") as string;
         const category = formData.get("category") as string;
-        const image = formData.get("image") as File;
-        const licenseAgreement = formData.get("licenseAgreement") as string;
-        const latestVersion = formData.get("latestVersion") as string;
-        const latestReleaseDate = formData.get("latestReleaseDate") as string;
-        const originalUnityVersion = formData.get("originalUnityVersion") as string;
         const galleryFiles = formData.getAll("gallery") as File[];
+        const platformsRaw = formData.get("platforms") as string;
+        const versionsRaw = formData.get("versions") as string;
 
-        // Validate required fields
-        if (!name || !description || !price || !category || !image) {
+        // Step 3: Validate required fields
+        if (!name || !description || !price || !category || !platformsRaw || !versionsRaw) {
             return NextResponse.json({ error: "Required fields are missing" }, { status: 400 });
         }
 
-        // Create upload directory
+        // Step 4: Parse platforms JSON data
+        let platforms: { platform: string; price: number }[] = [];
+        try {
+            platforms = JSON.parse(platformsRaw);
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid platforms data" }, { status: 400 });
+        }
+
+        //Step 6: Parse versions JSON data
+        let versions: { version: string; price: number }[] = [];
+        try {
+            versions = JSON.parse(versionsRaw);
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid versions data" }, { status: 400 });
+        }
+        // Step 5: Create upload directory if not exist
         const uploadPath = path.join(process.cwd(), "public", "uploads");
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
+       
 
-        // Save main image
-        const imagePath = path.join(uploadPath, image.name);
-        await fs.promises.writeFile(imagePath, Buffer.from(await image.arrayBuffer()));
-
-        // Save gallery images
-        const galleryPaths: string[] = []; // Array to hold gallery image paths
+        // Step 7: Handle gallery files upload
+        const galleryPaths: string[] = [];
         for (const file of galleryFiles) {
             const galleryPath = path.join(uploadPath, file.name);
             await fs.promises.writeFile(galleryPath, Buffer.from(await file.arrayBuffer()));
-            galleryPaths.push(`/uploads/${file.name}`); // Store relative path
+            galleryPaths.push(`/uploads/${file.name}`);
         }
 
-        // Create a new game record
+        // Step 8: Prepare the data for the new game
         const newGame = new Game({
             name,
             description,
-            price: parseFloat(price),
+            price: parseFloat(price),  // Convert price to number
             category,
-            image: `/uploads/${image.name}`, // Main image path
-            gallery: galleryPaths, // Array of gallery image paths
-            licenseAgreement,
-            latestVersion,
-            latestReleaseDate,
-            originalUnityVersion,
+            gallery: galleryPaths,
+            platforms, 
+            versions,
         });
 
-        // Save the game record to the database
+        // Step 9: Save the new game to the database
+        console.log("Saving game:", newGame);
         const savedGame = await newGame.save();
 
+        // Step 10: Return success response with saved game data
         return NextResponse.json(
             { message: "Game added successfully", game: savedGame },
             { status: 201 }
         );
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error:", error);
+
+        if (error.name === "ValidationError") {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
+
+
 
 
 
@@ -123,4 +140,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         );
     }
 }
-

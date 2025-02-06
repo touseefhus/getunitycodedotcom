@@ -39,6 +39,8 @@
     "mongoose": "^8.8.2",
     "multer": "^1.4.5-lts.1",
     "next": "15.0.3",
+    "next-nprogress-bar": "^2.4.3",
+    "nextjs-progressbar": "^0.0.16",
     "nodemailer": "^6.9.16",
     "or": "^0.2.0",
     "react": "19.0.0-rc-66855b96-20241106",

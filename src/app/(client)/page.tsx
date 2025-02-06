@@ -126,6 +126,7 @@ const Home: React.FC = () => {
                                             <strong>Price:</strong> ${game.price.toFixed(2)}
                                         </p>
                                     </div>
+
                                 </div>
                             </div>
                         ))}

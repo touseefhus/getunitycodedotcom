@@ -56,13 +56,16 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     }, []);
 
     // Add/Remove from Cart
-    const addToCart = (item: Game) => {
+    const addToCart = (e: React.MouseEvent<HTMLButtonElement>, item: Game) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!cartDetails.some((game) => game._id === item._id)) {
             const updatedCart = [...cartDetails, item];
             setCartDetails(updatedCart);
             localStorage.setItem("cart", JSON.stringify(updatedCart));
         }
     };
+
 
     const removeFromCart = (item: Game) => {
         const updatedCart = cartDetails.filter((game) => game._id !== item._id);
@@ -128,6 +131,7 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paginatedGames().map((game) => (
                         <div
+                            onClick={() => router.push(`/games/${category}/${game._id}`)}
                             className="p-5 border-solid border-2 rounded-2xl border-dark-200 game-card"
                             key={game._id}
                         >
@@ -150,23 +154,23 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
                                         View Details
                                     </Button>
                                     <Button
-                                        onClick={() =>
-                                            isInCart(game)
-                                                ? removeFromCart(game)
-                                                : addToCart(game)
-                                        }
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            isInCart(game) ? removeFromCart(game) : addToCart(e, game);
+                                        }}
                                     >
                                         {isInCart(game) ? <Trash size={16} /> : <ShoppingCart size={16} />}
                                     </Button>
+
                                     <Button
-                                        onClick={() =>
-                                            isInWishlist(game)
-                                                ? removeFromWishlist(game)
-                                                : addToWishlist(game)
-                                        }
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            isInWishlist(game) ? removeFromWishlist(game) : addToWishlist(game);
+                                        }}
                                     >
                                         {isInWishlist(game) ? <FaHeart size={16} /> : <CiHeart size={16} />}
                                     </Button>
+
                                 </div>
                             </div>
                         </div>

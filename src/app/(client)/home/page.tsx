@@ -34,7 +34,7 @@ const Hero: React.FC<HeroProps> = ({ onSearch }) => {
                         type="text"
                         value={query}
                         onChange={handleSearch}
-                        className="p-3 pl-3 pr-10 border border-gray-300 rounded-3xl w-full"
+                        className="p-3 pr-6 pr-10 border border-gray-300 rounded-3xl w-full"
                         placeholder="Search..."
                         style={{
                             color: "#333",

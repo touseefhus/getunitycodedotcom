@@ -77,7 +77,7 @@ const GameList: React.FC = () => {
                         <div className="p-6">
                             <h5 className="text-lg font-semibold">{game.name}</h5>
                             <p className="text-gray-800 mt-2">
-                                <strong>Price:</strong> ${game.price.toFixed(2)}
+                                <strong>Price:</strong> ${game.price}
                             </p>
                             <p className="text-gray-800 mt-1">
                                 <strong>Category:</strong> {game.category}

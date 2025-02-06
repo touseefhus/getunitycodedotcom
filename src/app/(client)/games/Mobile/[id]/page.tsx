@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import parse from "html-react-parser";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import Slider from "react-slick"
+import Slider from "react-slick";
 
 interface Game {
     _id: string;
@@ -18,6 +18,7 @@ interface Game {
     latestVersion: string;
     latestReleaseDate: string;
     originalUnityVersion: string;
+    gallery: string[]; // Add the gallery field here
 }
 
 const GameDetails: React.FC = () => {
@@ -49,13 +50,10 @@ const GameDetails: React.FC = () => {
         );
     }
 
-    const hardcodedImages = [
-        game.image,
-        "/images/sample1.jpg", // Replace with actual image URLs
-        "/images/sample2.jpg",
-        "/images/sample3.jpg",
-    ];
+    // Use the gallery images from the database
+    const galleryImages = game.gallery;
 
+    // Slider settings to display images as dots
     const sliderSettings = {
         dots: true,
         infinite: true,
@@ -63,6 +61,15 @@ const GameDetails: React.FC = () => {
         slidesToShow: 1,
         slidesToScroll: 1,
         arrows: false,
+        customPaging: (i: number) => (
+            <div className="relative">
+                <img
+                    src={galleryImages[i]} // Use the image URL from the gallery as a dot
+                    alt={`Dot ${i + 1}`}
+                    className="w-[150px] h-[150px] object-cover border-2 border-gray-300 cursor-pointer"
+                />
+            </div>
+        ),
     };
 
     return (
@@ -72,12 +79,12 @@ const GameDetails: React.FC = () => {
                     {/* Image Carousel */}
                     <div>
                         <Slider {...sliderSettings}>
-                            {hardcodedImages.map((image, index) => (
+                            {galleryImages.map((image, index) => (
                                 <div key={index}>
                                     <img
-                                        src={image}
+                                        src={image} // Use the image URL from the gallery
                                         alt={`Slide ${index + 1}`}
-                                        className="w-full object-cover"
+                                        className="w-100 h-30 object-cover"
                                     />
                                 </div>
                             ))}
@@ -98,7 +105,7 @@ const GameDetails: React.FC = () => {
                 </div>
 
                 {/* Description */}
-                <div className="mt-4">
+                <div style={{ marginTop: "100px" }}>
                     <div className="text-gray-600">{parse(game.description)}</div>
                 </div>
             </div>

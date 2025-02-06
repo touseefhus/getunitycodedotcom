@@ -43,7 +43,7 @@ const GameDetails: React.FC = () => {
                 <img src={game.image} alt={game.name} />
                 <p>{game.name}</p>
                 <strong><p>{game.price}</p></strong>
-                <p>{game.description}</p>
+                {/* <p>{game.description}</p> */}
             </div>
         </div>
     );

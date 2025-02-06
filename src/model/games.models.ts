@@ -5,12 +5,9 @@ export interface IGame extends Document {
     description: string;
     price: number;
     category: string;
-    image: string;
     gallery: string[];
-    licenseAgreement: string;
-    latestVersion: string;
-    latestReleaseDate: string;
-    originalUnityVersion: string;
+    platforms: { platform: string; price: number }[];
+    versions: { version: string; price: number }[];
 }
 
 const GameSchema = new Schema<IGame>({
@@ -18,12 +15,15 @@ const GameSchema = new Schema<IGame>({
     description: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    image: { type: String, required: true },
     gallery: { type: [String], required: false },
-    licenseAgreement: { type: String, required: true },
-    latestVersion: { type: String, required: true },
-    latestReleaseDate: { type: String, required: true },
-    originalUnityVersion: { type: String, required: true },
+    platforms: [{
+        platform: { type: String, required: true },
+        price: { type: Number, required: true }
+    }],
+    versions: [{
+        version: { type: String, required: true },
+        price: { type: Number, required: true }
+    }]
 });
 
 export default mongoose.models.Game || mongoose.model<IGame>("Game", GameSchema);

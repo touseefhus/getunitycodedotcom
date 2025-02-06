@@ -56,7 +56,7 @@ const CartPage: React.FC = () => {
                             />
                             <div className="p-4">
                                 <h5 className="font-semibold">{item.name}</h5>
-                                <p className="text-gray-600">{item.description}</p>
+                                {/* <p className="text-gray-600">{item.description}</p> */}
                                 <p className="text-gray-800 mt-2">
                                     <strong>Price:</strong> ${item.price.toFixed(2)}
                                 </p>
