@@ -7,8 +7,6 @@ import { ShoppingCart, Trash } from "lucide-react";
 import { CiHeart } from "react-icons/ci";
 import { FaHeart } from "react-icons/fa";
 import Navbar from "@/components/Navbar/page";
-import parse from "html-react-parser";
-
 interface Game {
     _id: string;
     name: string;
@@ -38,14 +36,16 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     const fetchGames = async () => {
         try {
             const response = await axios.get("/api/games");
-            const sortedGames = response.data.games.sort((a: Game, b: Game) =>
-                new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+            const sortedGames = response.data.games.sort(
+                (a: Game, b: Game) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
             );
             setGames(sortedGames);
         } catch (error) {
             console.error("Error while fetching games data", error);
         }
     };
+    
+    
 
     useEffect(() => {
         const storedCart = localStorage.getItem("cart");

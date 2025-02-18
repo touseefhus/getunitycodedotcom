@@ -10,7 +10,7 @@ interface GameData {
     description: string;
     price: string;
     category: string;
-   
+    image: File | null;
     gallery: File[];
     platforms: { platform: string; price: string }[];
     versions:{version:string;price:string}[];
@@ -22,6 +22,7 @@ const GameUploadForm: React.FC = () => {
         description: "",
         price: "",
         category: "",
+        image: null,
         gallery: [],
         platforms: [{ platform: "", price: "" }],
         versions:[{version:"",price:""}]
@@ -37,6 +38,14 @@ const GameUploadForm: React.FC = () => {
         }));
     };
 
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        setFormData((prevData) => ({
+            ...prevData,
+            image: file,
+        }));
+    };
  
 
     const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +103,8 @@ const GameUploadForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
     
-        const { name, description, price, category, gallery, platforms,versions } = formData;
-        if (!name || !description || !category  || platforms.some(p => !p.platform || !p.price) || versions.some(p => !p.version || !p.price)) {
+        const { name, description, price, category, gallery, platforms,versions,image } = formData;
+        if (!name || !description || !category || !image   || platforms.some(p => !p.platform || !p.price) || versions.some(p => !p.version || !p.price)) {
             toast.error("All required fields must be filled.");
             return;
         }
@@ -104,6 +113,7 @@ const GameUploadForm: React.FC = () => {
         formDataToSend.append("name", name);
         formDataToSend.append("description", description);
         formDataToSend.append("price", price);
+        formDataToSend.append("image", image);
         formDataToSend.append("category", category);
         formDataToSend.append("platforms", JSON.stringify(platforms));  // Convert platforms to JSON string
         formDataToSend.append("versions", JSON.stringify(versions));
@@ -124,6 +134,7 @@ const GameUploadForm: React.FC = () => {
                     name: "",
                     description: "",
                     price: "",
+                    image: null,
                     category: "",
                     gallery: [],
                     platforms: [{ platform: "", price: "" }],
@@ -192,6 +203,18 @@ const GameUploadForm: React.FC = () => {
                             <option value="PC">PC</option>
                             <option value="Mobile">Mobile</option>
                         </select>
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="image" className="block text-gray-700">Game Image:</label>
+                        <input
+                            type="file"
+                            id="image"
+                            name="image"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                            required
+                        />
                     </div>
                     <div className="mb-4">
                         <label htmlFor="gallery" className="block text-gray-700">Gallery Images:</label>

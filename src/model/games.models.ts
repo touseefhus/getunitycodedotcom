@@ -4,6 +4,7 @@ export interface IGame extends Document {
     name: string;
     description: string;
     price: number;
+    image: string;
     category: string;
     gallery: string[];
     platforms: { platform: string; price: number }[];
@@ -15,6 +16,10 @@ const GameSchema = new Schema<IGame>({
     description: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
+    image: {
+        type: String, // Store the path to the image in DB
+        required: true,
+    },
     gallery: { type: [String], required: false },
     platforms: [{
         platform: { type: String, required: true },

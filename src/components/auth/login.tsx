@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Button } from "../ui/button";
 
 interface LoginPageProps {
     onSwitch: () => void; // Switch to Register
@@ -81,13 +82,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitch, onClose }) => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <button
-                        type="submit"
-                        className="btn-primary w-full bg-blue-500 text-white font-medium py-2 rounded-md hover:bg-blue-600 transition"
-                        disabled={loading}
-                    >
-                        {loading ? "Logging in..." : "Login"}
-                    </button>
+                    <Button type="submit"
+                        className="w-full bg-blue-500 font-medium custom-btn"
+                        disabled={loading}>{loading ? "Logging in..." : "Login"}</Button>
                 </form>
                 <p className="mt-4 text-sm text-gray-600 text-center">
                     Don't have an account?{" "}

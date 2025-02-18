@@ -26,12 +26,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const description = formData.get("description") as string;
         const price = formData.get("price") as string;
         const category = formData.get("category") as string;
-        const galleryFiles = formData.getAll("gallery") as File[];
+        const image = formData.get("image") as File | null;  // Image can be null
+        const galleryFiles = formData.getAll("gallery") as File[];  // Gallery files are an array
         const platformsRaw = formData.get("platforms") as string;
         const versionsRaw = formData.get("versions") as string;
 
         // Step 3: Validate required fields
-        if (!name || !description || !price || !category || !platformsRaw || !versionsRaw) {
+        if (!name || !description || !price || !category || !image || !platformsRaw || !versionsRaw) {
             return NextResponse.json({ error: "Required fields are missing" }, { status: 400 });
         }
 
@@ -43,19 +44,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             return NextResponse.json({ error: "Invalid platforms data" }, { status: 400 });
         }
 
-        //Step 6: Parse versions JSON data
+        // Step 6: Parse versions JSON data
         let versions: { version: string; price: number }[] = [];
         try {
             versions = JSON.parse(versionsRaw);
         } catch (err) {
             return NextResponse.json({ error: "Invalid versions data" }, { status: 400 });
         }
+
         // Step 5: Create upload directory if not exist
         const uploadPath = path.join(process.cwd(), "public", "uploads");
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
-       
+
+        // Step 8: handle single image
+        if (image) {  // Check if image is not null
+            const imagePath = path.join(uploadPath, image.name);
+            await fs.promises.writeFile(imagePath, Buffer.from(await image.arrayBuffer()));
+        } else {
+            return NextResponse.json({ error: "Image file is required" }, { status: 400 });
+        }
 
         // Step 7: Handle gallery files upload
         const galleryPaths: string[] = [];
@@ -71,8 +80,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             description,
             price: parseFloat(price),  // Convert price to number
             category,
+            image: `/uploads/${image.name}`,
             gallery: galleryPaths,
-            platforms, 
+            platforms,
             versions,
         });
 
@@ -95,6 +105,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
 
 
 

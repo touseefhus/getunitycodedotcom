@@ -211,3 +211,21 @@ body::before {
   /* border-radius: 15px; */
   transform: scale(1.05);
 }
+
+
+/* styles/globals.css */
+/* Customize the progress bar color and height */
+#nprogress .bar {
+  background: #29d; /* Change the color */
+  height: 3px; /* Change the height */
+}
+
+/* Customize the spinner (if enabled) */
+#nprogress .spinner {
+  display: none; /* Hide the spinner */
+}
+
+#nprogress .spinner-icon {
+  border-top-color: #29d;
+  border-left-color: #29d;
+}

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Button } from "../ui/button";
 interface RegisterProps {
     onSwitch: () => void;
     onClose: () => void;
@@ -98,13 +99,9 @@ const RegisterPage: React.FC<RegisterProps> = ({ onSwitch, onClose }) => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <button
-                        type="submit"
-                        className="btn-primary w-full bg-green-500 text-white font-medium py-2 rounded-md hover:bg-green-600 transition"
-                        disabled={loading}
-                    >
-                        {loading ? "Registering..." : "Register"}
-                    </button>
+                    <Button  type="submit"
+                        className="custom-btn w-full bg-green-500 text-white font-medium"
+                        disabled={loading}>{loading ? "Registering..." : "Register"}</Button>
                 </form>
                 <p className="mt-4 text-sm text-gray-600 text-center">
                     Already have an account?{" "}
