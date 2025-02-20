@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import PaymentMethods from "@/components/paymentmethods/page";
+
 interface Platform {
     platform: string;
     price: number;
@@ -23,7 +24,6 @@ interface Game {
     _id: string;
     name: string;
     description: string;
-    price: number;
     category: string;
     image: string;
     gallery: string[];
@@ -34,14 +34,26 @@ interface Game {
 const GameDetails: React.FC = () => {
     const { id } = useParams();
     const [game, setGame] = useState<Game | null>(null);
-    const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-    const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
-    const [updatedPrice, setUpdatedPrice] = useState<number | null>(null);
+    const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
+    const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
+    const [platformPrice, setPlatformPrice] = useState<number>(0);
+    const [versionPrice, setVersionPrice] = useState<number>(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+
     const fetchSingleGame = async (gameId: string) => {
         try {
             const response = await axios.get(`/api/games?id=${gameId}`);
             setGame(response.data.game);
+
+            // Set initial prices from the first available platform and version
+            if (response.data.game.platforms.length > 0) {
+                setSelectedPlatform(response.data.game.platforms[0]);
+                setPlatformPrice(response.data.game.platforms[0].price);
+            }
+            if (response.data.game.versions.length > 0) {
+                setSelectedVersion(response.data.game.versions[0]);
+                setVersionPrice(response.data.game.versions[0].price);
+            }
         } catch (error) {
             console.error("Error while fetching game details", error);
         }
@@ -53,34 +65,8 @@ const GameDetails: React.FC = () => {
         }
     }, [id]);
 
-    useEffect(() => {
-        if (game && selectedPlatform && selectedVersion) {
-            // Find the selected platform and version
-            const selectedPlatformData = game.platforms.find(
-                (platform) => platform.platform === selectedPlatform
-            );
-            const selectedVersionData = game.versions.find(
-                (version) => version.version === selectedVersion
-            );
-
-            // Calculate the total price
-            if (selectedPlatformData && selectedVersionData) {
-                setUpdatedPrice(selectedPlatformData.price + selectedVersionData.price);
-            } else {
-                setUpdatedPrice(game.price); // Fallback to base price
-            }
-        } else if (game && selectedPlatform) {
-            // If no version is selected, use the platform price
-            const selectedPlatformData = game.platforms.find(
-                (platform) => platform.platform === selectedPlatform
-            );
-            if (selectedPlatformData) {
-                setUpdatedPrice(selectedPlatformData.price);
-            }
-        } else {
-            setUpdatedPrice(game?.price || null); // Default to base price
-        }
-    }, [selectedPlatform, selectedVersion, game]);
+    // Calculate total price dynamically
+    const totalPrice = platformPrice + versionPrice;
 
     if (!game) {
         return (
@@ -92,15 +78,12 @@ const GameDetails: React.FC = () => {
         );
     }
 
-    const galleryImages = game.gallery;
-
     const sliderSettings = {
         dots: true,
         infinite: true,
         speed: 500,
         slidesToShow: 1,
         slidesToScroll: 1,
-        // arrows: true,
         customPaging: (i: number) => (
             <div className="w-3 h-3 bg-gray-400 rounded-full cursor-pointer"></div>
         ),
@@ -109,10 +92,10 @@ const GameDetails: React.FC = () => {
     return (
         <div style={{ marginTop: "90px" }} className="container px-4 mx-auto">
             <div className="grid grid-cols-3 gap-6">
-                {/* Image Carousel (2/3 of the width) */}
+                {/* Image Carousel */}
                 <div className="col-span-2">
                     <Slider {...sliderSettings}>
-                        {galleryImages.map((image, index) => (
+                        {game.gallery.map((image, index) => (
                             <div key={index}>
                                 <img
                                     src={image}
@@ -124,40 +107,40 @@ const GameDetails: React.FC = () => {
                     </Slider>
                 </div>
 
-                {/* Game Details (1/3 of the width) */}
+                {/* Game Details */}
                 <div className="col-span-1">
                     <h2 className="text-2xl font-bold text-gray-800">{game.name}</h2>
-                    <p className="mt-2 text-lg text-gray-600">
-                        Price: ${updatedPrice?.toFixed(2) || game.price.toFixed(2)}
-                    </p>
+
+                    {/* Show separate prices for platform and version */}
+                    <div className="mt-2 text-lg text-gray-600">
+                        <p>Platform Price: ${platformPrice.toFixed(2)}</p>
+                        <p>Version Price: ${versionPrice.toFixed(2)}</p>
+                        <p className="font-bold">Total Price: ${totalPrice.toFixed(2)}</p>
+                    </div>
 
                     {/* Platform Selection */}
                     <h4 className="text-lg font-semibold text-gray-800 mt-4">Select Platform:</h4>
                     <div className="flex space-x-4 mt-3">
-                        {game.platforms?.length > 0 ? (
-                            game.platforms.map((platform) => (
-                                <button
-                                    key={platform._id} // Use _id as the key
-                                    onClick={() => {
-                                        setSelectedPlatform(platform.platform);
-                                        setSelectedVersion(null); // Reset version when platform changes
-                                    }}
-                                    className={`px-4 py-2 border ${
-                                        selectedPlatform === platform.platform
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-white text-gray-700"
-                                    } rounded-md shadow-sm hover:bg-indigo-500 hover:text-white focus:outline-none`}
-                                >
-                                    {platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1)}
-                                </button>
-                            ))
-                        ) : (
-                            <p className="text-gray-600">No platforms available.</p>
-                        )}
+                        {game.platforms.map((platform) => (
+                            <button
+                                key={platform._id}
+                                onClick={() => {
+                                    setSelectedPlatform(platform);
+                                    setPlatformPrice(platform.price);
+                                }}
+                                className={`px-4 py-2 border ${
+                                    selectedPlatform?._id === platform._id
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-white text-gray-700"
+                                } rounded-md shadow-sm hover:bg-indigo-500 hover:text-white focus:outline-none`}
+                            >
+                                {platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1)}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Version Selection */}
-                    {selectedPlatform && game.versions?.length > 0 && (
+                    {game.versions.length > 0 && (
                         <div className="mt-4">
                             <label htmlFor="unity-version" className="block text-gray-700 font-medium">
                                 Select Unity Version:
@@ -165,10 +148,15 @@ const GameDetails: React.FC = () => {
                             <select
                                 id="unity-version"
                                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                onChange={(e) => setSelectedVersion(e.target.value)}
-                                value={selectedVersion || ""}
+                                onChange={(e) => {
+                                    const selected = game.versions.find((v) => v.version === e.target.value);
+                                    if (selected) {
+                                        setSelectedVersion(selected);
+                                        setVersionPrice(selected.price);
+                                    }
+                                }}
+                                value={selectedVersion?.version || ""}
                             >
-                                <option value="">Select a version</option>
                                 {game.versions.map((version) => (
                                     <option key={version._id} value={version.version}>
                                         {version.version} - ${version.price.toFixed(2)}
@@ -177,60 +165,28 @@ const GameDetails: React.FC = () => {
                             </select>
                         </div>
                     )}
-                    
-                    
-                     {/* Payment Methods */}
+
+                    {/* Payment Methods */}
                     <PaymentMethods onSelect={setSelectedPaymentMethod} />
-                                
-                    {/* Static Features */}
+
+                    {/* Key Features */}
                     <div className="mt-6 space-y-2">
                         <h4 className="text-lg font-semibold text-gray-800">Key Features:</h4>
                         <ul className="list-disc pl-5">
                             <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
+                                <span className="text-green-500">✔</span>
                                 <span>3-months free support</span>
                             </li>
                             <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
+                                <span className="text-green-500">✔</span>
                                 <span>Error-free</span>
                             </li>
                             <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
+                                <span className="text-green-500">✔</span>
                                 <span>Reskinning available</span>
                             </li>
                         </ul>
                     </div>
-
                 </div>
             </div>
 

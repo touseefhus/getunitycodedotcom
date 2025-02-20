@@ -1,42 +1,38 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import nodemailer from 'nodemailer';
 
-type EmailRequestBody = {
-    name: string;
-    email: string;
-    address: string;
-    selectedMethod: string;
-};
+const transport = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT) || 587,
+    secure: Number(process.env.MAIL_PORT) === 465, 
+    auth: {
+        user: process.env.USER_NAME,
+        pass: process.env.USER_PASSWORD
+    }
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method === 'POST') {
-        const { name, email, address, selectedMethod } = req.body as EmailRequestBody;
+    if (req.method !== 'POST') {
+        return res.setHeader('Allow', ['POST']).status(405).json({ message: 'Method Not Allowed' });
+    }
 
-        // Create a Nodemailer transporter
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER as string,
-                pass: process.env.EMAIL_PASSWORD as string,
-            },
+    const { to, subject, text } = req.body;
+
+    if (!to || !subject || !text) {
+        return res.status(400).json({ message: "Missing required fields: 'to', 'subject', or 'text'" });
+    }
+
+    try {
+        await transport.sendMail({
+            from: `"Your Company" <${process.env.USER_NAME}>`,
+            to,
+            subject,
+            text,
         });
 
-        // Define the email options
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Invoice for Your Payment',
-            text: `Hello ${name},\n\nThank you for your payment via ${selectedMethod}.\n\nHere is your invoice:\n\nName: ${name}\nEmail: ${email}\nAddress: ${address}\nPayment Method: ${selectedMethod}\n\nBest regards,\nYour Company`,
-        };
-
-        try {
-            await transporter.sendMail(mailOptions);
-            res.status(200).json({ message: 'Email sent successfully' });
-        } catch (error) {
-            console.error('Error sending email:', error);
-            res.status(500).json({ message: 'Failed to send email' });
-        }
-    } else {
-        res.status(405).json({ message: 'Method not allowed' });
+        res.status(200).json({ message: 'Email sent successfully' });
+    } catch (error) {
+        console.error("Email sending error:", error);
+        res.status(500).json({ message: 'Error sending email', error });
     }
 }

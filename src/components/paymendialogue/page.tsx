@@ -2,7 +2,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface PaymentDialogProps {
@@ -17,24 +16,29 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, selected
     const [email, setEmail] = useState("");
     const [address, setAddress] = useState("");
 
-    const handleGenerateInvoice = async () => {
+    const sendEmail = async () => {
         try {
-            const response = await fetch('/api/sendEmail', {
-                method: 'POST',
+            const response = await fetch('/api/sendEmail', {  // ✅ Fixed API route name
+                method: 'POST', 
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, email, address, selectedMethod }),
+                body: JSON.stringify({
+                    to: email,  // Sending email entered in the form
+                    subject: 'Invoice Payment Confirmation',
+                    text: `Hello ${name},\n\nThank you for your payment using ${selectedMethod}.\n\nAddress: ${address}\n\nBest Regards, \nYour Company`,
+                }),
             });
-    
-            if (response.ok) {
-                console.log('Email sent successfully');
-                onConfirm();
-            } else {
-                console.error('Failed to send email');
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
             }
+
+            console.log("Email sent successfully");
+            alert("Invoice sent successfully!");
         } catch (error) {
-            console.error('Error:', error);
+            console.error("Failed to send email", error);
+            alert("Failed to send email");
         }
     };
 
@@ -67,7 +71,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, selected
                             />
                         </div>
                         <div>
-                           <label htmlFor="address">Address (Optional)</label>
+                            <label htmlFor="address">Address (Optional)</label>
                             <Input
                                 id="address"
                                 value={address}
@@ -78,7 +82,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, selected
                 </form>
                 <DialogFooter>
                     <Button className="mx-4" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button className="bg-indigo-600 text-white custom-btn" onClick={handleGenerateInvoice}>
+                    <Button className="bg-indigo-600 text-white custom-btn" onClick={sendEmail}>
                         Generate Invoice & Send Email
                     </Button>
                 </DialogFooter>
