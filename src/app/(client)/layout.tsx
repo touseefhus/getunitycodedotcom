@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import "../globals.css";
 import Navbar from "@/components/Navbar/page";
 import Footer from "@/components/Footer/page";
+import NextTopLoader from 'nextjs-toploader';
 // const geistSans = localFont({
 //     src: "./fonts/GeistVF.woff",
 //     variable: "--font-geist-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en">
             <body>
             <Navbar cartDetails={0} wishlistDetails={0} />
+            <NextTopLoader />
                     {children}
                 <Footer />
             </body>
