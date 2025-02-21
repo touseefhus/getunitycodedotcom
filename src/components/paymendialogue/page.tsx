@@ -18,7 +18,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, selected
 
     const sendEmail = async () => {
         try {
-            const response = await fetch('/api/sendEmail', {  // ✅ Fixed API route name
+            const response = await fetch('/api/sendEmail', {
                 method: 'POST', 
                 headers: {
                     'Content-Type': 'application/json',

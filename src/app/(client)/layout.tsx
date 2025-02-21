@@ -24,10 +24,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body
-            // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-            >   
-<Navbar cartDetails={[]} wishlistDetails={[]} />                {children}
+            <body>
+            <Navbar cartDetails={0} wishlistDetails={0} />
+                    {children}
                 <Footer />
             </body>
         </html>

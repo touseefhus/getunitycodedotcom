@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import parse from "html-react-parser";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -34,39 +34,46 @@ interface Game {
 const GameDetails: React.FC = () => {
     const { id } = useParams();
     const [game, setGame] = useState<Game | null>(null);
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
-    const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-    const [platformPrice, setPlatformPrice] = useState<number>(0);
-    const [versionPrice, setVersionPrice] = useState<number>(0);
+    const [selectedOptions, setSelectedOptions] = useState<{
+        platform: Platform | null;
+        version: Version | null;
+    }>({
+        platform: null,
+        version: null,
+    });
+
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
 
-    const fetchSingleGame = async (gameId: string) => {
+    // Fetch Game Data
+    const fetchSingleGame = useCallback(async (gameId: string) => {
         try {
             const response = await axios.get(`/api/games?id=${gameId}`);
-            setGame(response.data.game);
+            const fetchedGame = response.data.game;
+            setGame(fetchedGame);
 
-            // Set initial prices from the first available platform and version
-            if (response.data.game.platforms.length > 0) {
-                setSelectedPlatform(response.data.game.platforms[0]);
-                setPlatformPrice(response.data.game.platforms[0].price);
-            }
-            if (response.data.game.versions.length > 0) {
-                setSelectedVersion(response.data.game.versions[0]);
-                setVersionPrice(response.data.game.versions[0].price);
-            }
+            // Set default selections
+            setSelectedOptions({
+                platform: fetchedGame.platforms[0] || null,
+                version: fetchedGame.versions[0] || null,
+            });
         } catch (error) {
             console.error("Error while fetching game details", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (id) {
             fetchSingleGame(id as string);
         }
-    }, [id]);
+    }, [id, fetchSingleGame]);
 
-    // Calculate total price dynamically
-    const totalPrice = platformPrice + versionPrice;
+    // Compute Total Price
+    const totalPrice = useMemo(() => {
+        return (
+            (selectedOptions.platform?.price || 0) +
+            (selectedOptions.version?.price || 0)
+        );
+    }, [selectedOptions]);
 
     if (!game) {
         return (
@@ -84,7 +91,7 @@ const GameDetails: React.FC = () => {
         speed: 500,
         slidesToShow: 1,
         slidesToScroll: 1,
-        customPaging: (i: number) => (
+        customPaging: () => (
             <div className="w-3 h-3 bg-gray-400 rounded-full cursor-pointer"></div>
         ),
     };
@@ -111,10 +118,9 @@ const GameDetails: React.FC = () => {
                 <div className="col-span-1">
                     <h2 className="text-2xl font-bold text-gray-800">{game.name}</h2>
 
-                    {/* Show separate prices for platform and version */}
                     <div className="mt-2 text-lg text-gray-600">
-                        <p>Platform Price: ${platformPrice.toFixed(2)}</p>
-                        <p>Version Price: ${versionPrice.toFixed(2)}</p>
+                        <p>Platform Price: ${selectedOptions.platform?.price?.toFixed(2) || "0.00"}</p>
+                        <p>Version Price: ${selectedOptions.version?.price?.toFixed(2) || "0.00"}</p>
                         <p className="font-bold">Total Price: ${totalPrice.toFixed(2)}</p>
                     </div>
 
@@ -124,12 +130,14 @@ const GameDetails: React.FC = () => {
                         {game.platforms.map((platform) => (
                             <button
                                 key={platform._id}
-                                onClick={() => {
-                                    setSelectedPlatform(platform);
-                                    setPlatformPrice(platform.price);
-                                }}
+                                onClick={() =>
+                                    setSelectedOptions((prev) => ({
+                                        ...prev,
+                                        platform,
+                                    }))
+                                }
                                 className={`px-4 py-2 border ${
-                                    selectedPlatform?._id === platform._id
+                                    selectedOptions.platform?._id === platform._id
                                         ? "bg-indigo-600 text-white"
                                         : "bg-white text-gray-700"
                                 } rounded-md shadow-sm hover:bg-indigo-500 hover:text-white focus:outline-none`}
@@ -151,11 +159,13 @@ const GameDetails: React.FC = () => {
                                 onChange={(e) => {
                                     const selected = game.versions.find((v) => v.version === e.target.value);
                                     if (selected) {
-                                        setSelectedVersion(selected);
-                                        setVersionPrice(selected.price);
+                                        setSelectedOptions((prev) => ({
+                                            ...prev,
+                                            version: selected,
+                                        }));
                                     }
                                 }}
-                                value={selectedVersion?.version || ""}
+                                value={selectedOptions.version?.version || ""}
                             >
                                 {game.versions.map((version) => (
                                     <option key={version._id} value={version.version}>
