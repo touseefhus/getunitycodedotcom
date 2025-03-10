@@ -19,12 +19,12 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, selected
     const sendEmail = async () => {
         try {
             const response = await fetch('/api/sendEmail', {
-                method: 'POST', 
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    to: email,  // Sending email entered in the form
+                    to: email,
                     subject: 'Invoice Payment Confirmation',
                     text: `Hello ${name},\n\nThank you for your payment using ${selectedMethod}.\n\nAddress: ${address}\n\nBest Regards, \nYour Company`,
                 }),

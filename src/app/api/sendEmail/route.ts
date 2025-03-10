@@ -1,38 +1,60 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 const transport = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: Number(process.env.MAIL_PORT) || 587,
-    secure: Number(process.env.MAIL_PORT) === 465, 
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.USER_PASSWORD
-    }
+  service: "Gmail",
+  auth: {
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
+  },
+  debug: true, 
+  logger: true, 
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method !== 'POST') {
-        return res.setHeader('Allow', ['POST']).status(405).json({ message: 'Method Not Allowed' });
-    }
+type SendEmailDto = {
+  to: string;
+  subject: string;
+  text: string;
+};
 
-    const { to, subject, text } = req.body;
+const sendEmail = async (dto: SendEmailDto) => {
+  const { to, subject, text } = dto;
 
-    if (!to || !subject || !text) {
-        return res.status(400).json({ message: "Missing required fields: 'to', 'subject', or 'text'" });
-    }
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER, 
+      to, 
+      subject,
+      text,
+    };
 
-    try {
-        await transport.sendMail({
-            from: `"Your Company" <${process.env.USER_NAME}>`,
-            to,
-            subject,
-            text,
-        });
+    // Await the sendMail function
+    const info = await transport.sendMail(mailOptions);
 
-        res.status(200).json({ message: 'Email sent successfully' });
-    } catch (error) {
-        console.error("Email sending error:", error);
-        res.status(500).json({ message: 'Error sending email', error });
-    }
+    console.log("Email sent: " + info.response);
+    return "Email sent successfully";
+  } catch (err: any) {
+    console.error("Error:", err.message);
+    return "Failed to send email";
+  }
+};
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  console.log("Request body:", body);
+
+  try {
+    const result = await sendEmail({
+      to: body.to,
+      subject: body.subject,
+      text: body.text,
+    });
+
+    console.log("Email result:", result);
+    return NextResponse.json({ result });
+  } catch (error) {
+    console.error("Server error:", error);
+    return NextResponse.json({ message: "Unable to send email" }, { status: 500 });
+  }
 }
