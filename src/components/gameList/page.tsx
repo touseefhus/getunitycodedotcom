@@ -7,6 +7,7 @@ import { ShoppingCart, Trash } from "lucide-react";
 import { CiHeart } from "react-icons/ci";
 import { FaHeart } from "react-icons/fa";
 import Navbar from "@/components/Navbar/page";
+import Pagination from "../pagination/page";
 
 interface Game {
   _id: string;
@@ -27,23 +28,25 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
   const [games, setGames] = useState<Game[]>([]);
   const [cartDetails, setCartDetails] = useState<Game[]>([]);
   const [wishlist, setWishlist] = useState<Game[]>([]);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const gamesPerPage = 6; 
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    // Retrieve the current page from localStorage, default to 1 if not found
+    const savedPage = localStorage.getItem("currentPage");
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
+  const gamesPerPage = 6;
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [cartLoading, setCartLoading] = useState<string | null>(null); 
-  const [wishlistLoading, setWishlistLoading] = useState<string | null>(null); 
-  const [viewDetailsLoading, setViewDetailsLoading] = useState<string | null>(null); 
+  const [cartLoading, setCartLoading] = useState<string | null>(null);
+  const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
+  const [viewDetailsLoading, setViewDetailsLoading] = useState<string | null>(null);
   const router = useRouter();
 
+  // Fetch games
   const fetchGames = useCallback(async () => {
     try {
       const response = await axios.get("/api/games");
-
-      // Sort games by `uploadDate` in descending order (newest first)
       const sortedGames = response.data.games.sort(
         (a: Game, b: Game) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
       );
-
       setGames(sortedGames);
     } catch (error) {
       console.error("Error while fetching games data", error);
@@ -52,8 +55,6 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
 
   useEffect(() => {
     fetchGames();
-
-    // Retrieve cart & wishlist from localStorage
     setCartDetails(JSON.parse(localStorage.getItem("cart") || "[]"));
     setWishlist(JSON.parse(localStorage.getItem("wishlist") || "[]"));
   }, [fetchGames]);
@@ -67,33 +68,72 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
-  // Cart Operations
-const addToCart = useCallback(
-  async (e: React.MouseEvent<HTMLButtonElement>, item: Game) => {
-    e.stopPropagation();
-    setCartLoading(item._id);
+  // Save current page to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("currentPage", currentPage.toString());
+  }, [currentPage]);
+
+  // Filter and Paginate Games
+  const filteredGames = useMemo(() => {
+    return games.filter(
+      (game) =>
+        game.category.toLowerCase() === category.toLowerCase() &&
+        (game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          game.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [games, category, searchQuery]);
+
+  const paginatedGames = useMemo(() => {
+    const startIndex = (currentPage - 1) * gamesPerPage;
+    return filteredGames.slice(startIndex, startIndex + gamesPerPage);
+  }, [filteredGames, currentPage, gamesPerPage]);
+
+  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // View Details Operation
+  const handleViewDetails = useCallback(async (gameId: string) => {
+    setViewDetailsLoading(gameId); 
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
-      if (!cartDetails.some((game) => game._id === item._id)) {
-        setCartDetails((prev) => [...prev, item]); // Update state
-      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      router.push(`/games/${category}/${gameId}`);
     } catch (error) {
-      console.error("Error adding to cart", error);
+      console.error("Error navigating to game details", error);
     } finally {
-      setCartLoading(null);
+      setViewDetailsLoading(null); 
     }
-  },
-  [cartDetails]
-);
+  }, [category, router]);
+
+  // Cart Operations
+  const addToCart = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>, item: Game) => {
+      e.stopPropagation();
+      setCartLoading(item._id);
+
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1000)); 
+        if (!cartDetails.some((game) => game._id === item._id)) {
+          setCartDetails((prev) => [...prev, item]); 
+        }
+      } catch (error) {
+        console.error("Error adding to cart", error);
+      } finally {
+        setCartLoading(null);
+      }
+    },
+    [cartDetails]
+  );
 
   const removeFromCart = useCallback(async (item: Game) => {
-    setCartLoading(item._id); // Set loading state for this item
+    setCartLoading(item._id); 
 
     try {
-      // Simulate an async operation (e.g., API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1-second delay
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); 
       setCartDetails((prev) => prev.filter((game) => game._id !== item._id));
     } catch (error) {
       console.error("Error removing from cart", error);
@@ -109,9 +149,7 @@ const addToCart = useCallback(
     setWishlistLoading(item._id); // Set loading state for this item
 
     try {
-      // Simulate an async operation (e.g., API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1-second delay
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); 
       if (!wishlist.some((game) => game._id === item._id)) {
         setWishlist((prev) => [...prev, item]);
       }
@@ -123,55 +161,19 @@ const addToCart = useCallback(
   }, [wishlist]);
 
   const removeFromWishlist = useCallback(async (item: Game) => {
-    setWishlistLoading(item._id); // Set loading state for this item
+    setWishlistLoading(item._id); 
 
     try {
-      // Simulate an async operation (e.g., API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1-second delay
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); 
       setWishlist((prev) => prev.filter((game) => game._id !== item._id));
     } catch (error) {
       console.error("Error removing from wishlist", error);
     } finally {
-      setWishlistLoading(null); // Reset loading state
+      setWishlistLoading(null); 
     }
   }, []);
 
   const isInWishlist = (game: Game) => wishlist.some((item) => item._id === game._id);
-
-  // View Details Operation
-  const handleViewDetails = useCallback(async (gameId: string) => {
-    setViewDetailsLoading(gameId); // Set loading state for this item
-
-    try {
-      // Simulate an async operation (e.g., API call or navigation delay)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1-second delay
-
-      // Navigate to the game details page
-      router.push(`/games/${category}/${gameId}`);
-    } catch (error) {
-      console.error("Error navigating to game details", error);
-    } finally {
-      setViewDetailsLoading(null); // Reset loading state
-    }
-  }, [category, router]);
-
-  // Filter and Paginate Games
-  const filteredGames = useMemo(() => {
-    return games.filter(
-      (game) =>
-        game.category.toLowerCase() === category.toLowerCase() &&
-        (game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          game.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [games, category, searchQuery]);
-
-  const paginatedGames = useMemo(() => {
-    const startIndex = (currentPage - 1) * gamesPerPage;
-    return filteredGames.slice(startIndex, startIndex + gamesPerPage);
-  }, [filteredGames, currentPage, gamesPerPage]); // Add `gamesPerPage` to the dependency array
-
-  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
 
   return (
     <div style={{ marginTop: "90px" }}>
@@ -201,18 +203,17 @@ const addToCart = useCallback(
               />
               <div className="p-4">
                 <h5 className="font-semibold">{game.name}</h5>
-
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex gap-2 items-center mt-4">
                   <Button
-                  className="custom-btn"
+                    className="custom-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewDetails(game._id);
                     }}
-                    disabled={viewDetailsLoading === game._id} // Disable button while loading
+                    disabled={viewDetailsLoading === game._id}
                   >
                     {viewDetailsLoading === game._id ? (
-                      <div className="animate-spin">🌀</div> // Spinner or loading icon
+                      <div className="animate-spin">🌀</div>
                     ) : (
                       "View Details"
                     )}
@@ -222,10 +223,10 @@ const addToCart = useCallback(
                       e.stopPropagation();
                       isInCart(game) ? removeFromCart(game) : addToCart(e, game);
                     }}
-                    disabled={cartLoading === game._id} // Disable button while loading
+                    disabled={cartLoading === game._id}
                   >
                     {cartLoading === game._id ? (
-                      <div className="animate-spin">🌀</div> // Spinner or loading icon
+                      <div className="animate-spin">🌀</div>
                     ) : isInCart(game) ? (
                       <Trash size={16} />
                     ) : (
@@ -237,10 +238,10 @@ const addToCart = useCallback(
                       e.stopPropagation();
                       isInWishlist(game) ? removeFromWishlist(game) : addToWishlist(game);
                     }}
-                    disabled={wishlistLoading === game._id} // Disable button while loading
+                    disabled={wishlistLoading === game._id}
                   >
                     {wishlistLoading === game._id ? (
-                      <div className="animate-spin">🌀</div> // Spinner or loading icon
+                      <div className="animate-spin">🌀</div>
                     ) : isInWishlist(game) ? (
                       <FaHeart size={16} />
                     ) : (
@@ -256,15 +257,11 @@ const addToCart = useCallback(
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center space-x-4 mt-8">
-          <Button className="custom-btn" disabled={currentPage === 1} onClick={() => setCurrentPage((prev) => prev - 1)}>
-            Previous
-          </Button>
-          <span>Page {currentPage} of {totalPages}</span>
-          <Button className="custom-btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage((prev) => prev + 1)}>
-            Next
-          </Button>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );
