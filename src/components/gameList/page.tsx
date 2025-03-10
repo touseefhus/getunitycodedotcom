@@ -177,93 +177,95 @@ const GamesList: React.FC<GamesListProps> = ({ category, title }) => {
 
   return (
     <div style={{ marginTop: "90px" }}>
-      <Navbar wishlistDetails={wishlist.length} cartDetails={cartDetails.length} />
-      <h2 className="text-center text-2xl font-semibold mb-9">{title}</h2>
-
-      <div className="container mx-auto px-4">
-        <input
-          type="text"
-          placeholder="Search games..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedGames.map((game) => (
-            <div
-              onClick={() => handleViewDetails(game._id)}
-              className="p-5 border-solid border-2 rounded-2xl border-dark-200 game-card"
-              key={game._id}
-            >
-              <img
-                src={game.image || "/default-image.png"}
-                alt={game.name}
-                className="w-full h-48 object-cover rounded-lg"
-              />
-              <div className="p-4">
-                <h5 className="font-semibold">{game.name}</h5>
-                <div className="flex gap-2 items-center mt-4">
-                  <Button
-                    className="custom-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDetails(game._id);
-                    }}
-                    disabled={viewDetailsLoading === game._id}
-                  >
-                    {viewDetailsLoading === game._id ? (
-                      <div className="animate-spin">🌀</div>
-                    ) : (
-                      "View Details"
-                    )}
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      isInCart(game) ? removeFromCart(game) : addToCart(e, game);
-                    }}
-                    disabled={cartLoading === game._id}
-                  >
-                    {cartLoading === game._id ? (
-                      <div className="animate-spin">🌀</div>
-                    ) : isInCart(game) ? (
-                      <Trash size={16} />
-                    ) : (
-                      <ShoppingCart size={16} />
-                    )}
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      isInWishlist(game) ? removeFromWishlist(game) : addToWishlist(game);
-                    }}
-                    disabled={wishlistLoading === game._id}
-                  >
-                    {wishlistLoading === game._id ? (
-                      <div className="animate-spin">🌀</div>
-                    ) : isInWishlist(game) ? (
-                      <FaHeart size={16} />
-                    ) : (
-                      <CiHeart size={16} />
-                    )}
-                  </Button>
-                </div>
+    <Navbar wishlistDetails={wishlist.length} cartDetails={cartDetails.length} />
+    <h2 className="text-center text-2xl font-semibold mb-9">{title}</h2>
+  
+    <div className="container mx-auto px-4">
+      <input
+        type="text"
+        placeholder="Search games..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full px-4 py-2 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+  
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {paginatedGames.map((game) => (
+          <div
+            onClick={() => handleViewDetails(game._id)}
+            className="p-5 border-solid border-2 rounded-2xl border-dark-200 game-card"
+            key={game._id}
+          >
+            <img
+              src={game.image || "/default-image.png"}
+              alt={game.name}
+              className="w-full h-48 object-cover rounded-lg"
+            />
+            <div className="p-4">
+              <h5 className="font-semibold text-lg sm:text-xl">{game.name}</h5>
+              <div className="flex gap-2 items-center mt-4">
+                <Button
+                  className="custom-btn w-full sm:w-auto px-4 py-2 text-sm sm:text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails(game._id);
+                  }}
+                  disabled={viewDetailsLoading === game._id}
+                >
+                  {viewDetailsLoading === game._id ? (
+                    <div className="animate-spin">🌀</div>
+                  ) : (
+                    "View Details"
+                  )}
+                </Button>
+                <Button
+                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    isInCart(game) ? removeFromCart(game) : addToCart(e, game);
+                  }}
+                  disabled={cartLoading === game._id}
+                >
+                  {cartLoading === game._id ? (
+                    <div className="animate-spin">🌀</div>
+                  ) : isInCart(game) ? (
+                    <Trash size={16} />
+                  ) : (
+                    <ShoppingCart size={16} />
+                  )}
+                </Button>
+                <Button
+                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    isInWishlist(game) ? removeFromWishlist(game) : addToWishlist(game);
+                  }}
+                  disabled={wishlistLoading === game._id}
+                >
+                  {wishlistLoading === game._id ? (
+                    <div className="animate-spin">🌀</div>
+                  ) : isInWishlist(game) ? (
+                    <FaHeart size={16} />
+                  ) : (
+                    <CiHeart size={16} />
+                  )}
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
     </div>
+  
+    {/* Pagination */}
+    {totalPages > 1 && (
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    )}
+  </div>
   );
 };
 

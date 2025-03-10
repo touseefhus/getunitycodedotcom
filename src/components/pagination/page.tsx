@@ -2,14 +2,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
-  currentPage: number; // Current active page
-  totalPages: number; // Total number of pages
-  onPageChange: (page: number) => void; // Callback function for page change
+  currentPage: number; 
+  totalPages: number; 
+  onPageChange: (page: number) => void;
 }
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
   return (
-    <div className="flex justify-center items-center space-x-4 mt-8">
+    <div className="flex px-2 justify-center items-center space-x-4 mt-8">
       {/* Previous Button */}
       <Button
         className="custom-btn"
