@@ -1,253 +1,320 @@
 "use client";
-import { useParams } from "next/navigation";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import parse from "html-react-parser";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import Slider from "react-slick";
-import PaymentMethods from "@/components/paymentmethods/page";
 
-interface Platform {
-    platform: string;
-    price: number;
-    _id: string;
-}
+import React, { useState } from "react";
+import DOMPurify from "dompurify"; // For sanitizing HTML
+import parse from "html-react-parser"; // For parsing HTML strings into React components
 
-interface Version {
-    version: string;
-    price: number;
-    _id: string;
-}
+const UploadGameForm = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "", // This will store raw HTML
+    price: "",
+    category: "",
+  });
+  const [platforms, setPlatforms] = useState([{ platform: "", price: 0 }]);
+  const [versions, setVersions] = useState([{ version: "", price: 0 }]);
+  const [image, setImage] = useState<File | null>(null);
+  const [gallery, setGallery] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-interface Game {
-    _id: string;
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    image: string;
-    gallery: string[];
-    platforms: Platform[];
-    versions: Version[];
-}
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-const GameDetails: React.FC = () => {
-    const { id } = useParams();
-    const [game, setGame] = useState<Game | null>(null);
-    const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-    const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
-    const [updatedPrice, setUpdatedPrice] = useState<number | null>(null);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const handlePlatformChange = (
+    index: number,
+    key: string,
+    value: string | number
+  ) => {
+    const newPlatforms = [...platforms];
+    newPlatforms[index] = { ...newPlatforms[index], [key]: value };
+    setPlatforms(newPlatforms);
+  };
 
-    const fetchSingleGame = async (gameId: string) => {
-        try {
-            const response = await axios.get(`/api/games?id=${gameId}`);
-            setGame(response.data.game);
+  const handleVersionChange = (
+    index: number,
+    key: string,
+    value: string | number
+  ) => {
+    const newVersions = [...versions];
+    newVersions[index] = { ...newVersions[index], [key]: value };
+    setVersions(newVersions);
+  };
 
-            // Set default platform and version
-            if (response.data.game.platforms.length > 0) {
-                setSelectedPlatform(response.data.game.platforms[0].platform);
-            }
-            if (response.data.game.versions.length > 0) {
-                setSelectedVersion(response.data.game.versions[0].version);
-            }
-        } catch (error) {
-            console.error("Error while fetching game details", error);
-        }
-    };
+  const addPlatform = () =>
+    setPlatforms([...platforms, { platform: "", price: 0 }]);
+  const removePlatform = (index: number) =>
+    setPlatforms(platforms.filter((_, i) => i !== index));
 
-    useEffect(() => {
-        if (id) {
-            fetchSingleGame(id as string);
-        }
-    }, [id]);
+  const addVersion = () =>
+    setVersions([...versions, { version: "", price: 0 }]);
+  const removeVersion = (index: number) =>
+    setVersions(versions.filter((_, i) => i !== index));
 
-    useEffect(() => {
-        if (game && selectedPlatform && selectedVersion) {
-            // Find the selected platform and version
-            const selectedPlatformData = game.platforms.find(
-                (platform) => platform.platform === selectedPlatform
-            );
-            const selectedVersionData = game.versions.find(
-                (version) => version.version === selectedVersion
-            );
-
-            // Calculate the total price
-            if (selectedPlatformData && selectedVersionData) {
-                setUpdatedPrice(game.price + selectedPlatformData.price + selectedVersionData.price);
-            } else {
-                setUpdatedPrice(game.price); // Fallback to base price
-            }
-        } else if (game && selectedPlatform) {
-            // If no version is selected, use the platform price
-            const selectedPlatformData = game.platforms.find(
-                (platform) => platform.platform === selectedPlatform
-            );
-            if (selectedPlatformData) {
-                setUpdatedPrice(game.price + selectedPlatformData.price);
-            }
-        } else {
-            setUpdatedPrice(game?.price || null); // Default to base price
-        }
-    }, [selectedPlatform, selectedVersion, game]);
-
-    if (!game) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gray-100">
-                <p className="text-lg font-semibold text-gray-700 animate-pulse">
-                    Loading game details...
-                </p>
-            </div>
-        );
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
     }
+  };
 
-    const galleryImages = game.gallery;
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setGallery(Array.from(e.target.files));
+    }
+  };
 
-    const sliderSettings = {
-        dots: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        customPaging: (i: number) => (
-            <div className="w-3 h-3 bg-gray-400 rounded-full cursor-pointer"></div>
-        ),
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
 
-    return (
-        <div style={{ marginTop: "90px" }} className="container px-4 mx-auto">
-            <div className="grid grid-cols-3 gap-6">
-                {/* Image Carousel (2/3 of the width) */}
-                <div className="col-span-2">
-                    <Slider {...sliderSettings}>
-                        {galleryImages.map((image, index) => (
-                            <div key={index}>
-                                <img
-                                    src={image}
-                                    alt={`Slide ${index + 1}`}
-                                    className="w-full h-[400px] object-cover"
-                                />
-                            </div>
-                        ))}
-                    </Slider>
-                </div>
+    try {
+      // Sanitize the HTML description before sending it to the backend
+      const sanitizedDescription = DOMPurify.sanitize(formData.description);
 
-                {/* Game Details (1/3 of the width) */}
-                <div className="col-span-1">
-                    <h2 className="text-2xl font-bold text-gray-800">{game.name}</h2>
-                    <p className="mt-2 text-lg text-gray-600">
-                        Price: ${updatedPrice?.toFixed(2) || game.price.toFixed(2)}
-                    </p>
+      // Create FormData object
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("description", sanitizedDescription); // Use sanitized HTML
+      data.append("price", formData.price);
+      data.append("category", formData.category);
+      data.append("platforms", JSON.stringify(platforms));
+      data.append("versions", JSON.stringify(versions));
 
-                    {/* Platform Selection */}
-                    <h4 className="text-lg font-semibold text-gray-800 mt-4">Select Platform:</h4>
-                    <div className="flex space-x-4 mt-3">
-                        {game.platforms?.length > 0 ? (
-                            game.platforms.map((platform) => (
-                                <button
-                                    key={platform._id}
-                                    onClick={() => {
-                                        setSelectedPlatform(platform.platform);
-                                        setSelectedVersion(null); // Reset version when platform changes
-                                    }}
-                                    className={`px-4 py-2 border ${
-                                        selectedPlatform === platform.platform
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-white text-gray-700"
-                                    } rounded-md shadow-sm hover:bg-indigo-500 hover:text-white focus:outline-none`}
-                                >
-                                    {platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1)}
-                                </button>
-                            ))
-                        ) : (
-                            <p className="text-gray-600">No platforms available.</p>
-                        )}
-                    </div>
+      if (image) {
+        data.append("image", image);
+      }
 
-                    {/* Version Selection */}
-                    {selectedPlatform && game.versions?.length > 0 && (
-                        <div className="mt-4">
-                            <label htmlFor="unity-version" className="block text-gray-700 font-medium">
-                                Select Unity Version:
-                            </label>
-                            <select
-                                id="unity-version"
-                                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                onChange={(e) => setSelectedVersion(e.target.value)}
-                                value={selectedVersion || ""}
-                            >
-                                <option value="">Select a version</option>
-                                {game.versions.map((version) => (
-                                    <option key={version._id} value={version.version}>
-                                        {version.version} - ${version.price.toFixed(2)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+      gallery.forEach((file) => {
+        data.append("gallery", file);
+      });
 
-                    {/* Payment Methods */}
-                    <PaymentMethods onSelect={setSelectedPaymentMethod} />
+      // Log FormData for debugging
 
-                    {/* Static Features */}
-                    <div className="mt-6 space-y-2">
-                        <h4 className="text-lg font-semibold text-gray-800">Key Features:</h4>
-                        <ul className="list-disc pl-5">
-                            <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                                <span>3-months free support</span>
-                            </li>
-                            <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                                <span>Error-free</span>
-                            </li>
-                            <li className="flex items-center space-x-2 text-gray-700">
-                                <span className="text-green-500">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="w-6 h-6"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                                <span>Reskinning available</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+      // Send POST request to the backend
+      const response = await fetch("/api/games", {
+        method: "POST",
+        body: data,
+      });
 
-            {/* Description */}
-            <div className="mt-8">
-                <h3 className="text-xl font-semibold text-gray-800">Description</h3>
-                <div className="mt-2 text-gray-600">{parse(game.description)}</div>
-            </div>
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to upload game");
+      }
+
+      const result = await response.json();
+      console.log("Game uploaded successfully:", result);
+      setSuccess(true);
+    } catch (err) {
+      console.error("Error uploading game:", err);
+      if (err instanceof Error) {
+        setError(err.message || "An error occurred while uploading the game");
+      } else {
+        setError("An unknown error occurred while uploading the game");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <h1 className="text-2xl font-bold mb-6">Upload Game</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          />
         </div>
-    );
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            required
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+            placeholder="Enter HTML content"
+          />
+          {/* Preview the parsed HTML */}
+          <div className="mt-4 p-4 border border-gray-300 rounded-md bg-gray-50">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Preview:</h3>
+            <div className="prose">
+              {parse(DOMPurify.sanitize(formData.description))}
+            </div>
+          </div>
+        </div>
+
+        {/* Price */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Price
+          </label>
+          <input
+            type="number"
+            name="price"
+            value={formData.price}
+            onChange={handleInputChange}
+            required
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Category
+          </label>
+          <input
+            type="text"
+            name="category"
+            value={formData.category}
+            onChange={handleInputChange}
+            required
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        {/* Platforms */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Platforms
+          </label>
+          {platforms.map((p, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Platform"
+                value={p.platform}
+                onChange={(e) =>
+                  handlePlatformChange(index, "platform", e.target.value)
+                }
+                className="p-2 border border-gray-300 rounded-md w-full"
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                value={p.price}
+                onChange={(e) =>
+                  handlePlatformChange(index, "price", Number(e.target.value))
+                }
+                className="p-2 border border-gray-300 rounded-md w-1/3"
+              />
+              <button
+                type="button"
+                onClick={() => removePlatform(index)}
+                className="text-red-500"
+              >
+                X
+              </button>
+            </div>
+          ))}
+          <button type="button" onClick={addPlatform} className="text-blue-500">
+            + Add Platform
+          </button>
+        </div>
+
+        {/* Versions */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Versions
+          </label>
+          {versions.map((v, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Version"
+                value={v.version}
+                onChange={(e) =>
+                  handleVersionChange(index, "version", e.target.value)
+                }
+                className="p-2 border border-gray-300 rounded-md w-full"
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                value={v.price}
+                onChange={(e) =>
+                  handleVersionChange(index, "price", Number(e.target.value))
+                }
+                className="p-2 border border-gray-300 rounded-md w-1/3"
+              />
+              <button
+                type="button"
+                onClick={() => removeVersion(index)}
+                className="text-red-500"
+              >
+                X
+              </button>
+            </div>
+          ))}
+          <button type="button" onClick={addVersion} className="text-blue-500">
+            + Add Version
+          </button>
+        </div>
+
+        {/* Image Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Game Image
+          </label>
+          <input
+            type="file"
+            onChange={handleImageChange}
+            accept="image/*"
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        {/* Gallery Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Game Gallery
+          </label>
+          <input
+            type="file"
+            onChange={handleGalleryChange}
+            accept="image/*"
+            multiple
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+        >
+          {loading ? "Uploading..." : "Upload Game"}
+        </button>
+
+        {error && <p className="text-red-500">{error}</p>}
+        {success && (
+          <p className="text-green-500">Game uploaded successfully!</p>
+        )}
+      </form>
+    </div>
+  );
 };
 
-export default GameDetails;
+export default UploadGameForm;
